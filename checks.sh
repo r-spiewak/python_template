@@ -49,6 +49,24 @@ install_package(){
     echo "Done."
 }
 
+detect_secrets(){
+    echo "Running detect secrets..."
+    poetry run which detect-secrets-hook >/dev/null
+    exit_code=$?
+    if [[ $exit_code != 0 ]]
+    then 
+        install_package
+    fi
+    poetry run detect-secrets-hook --baseline .secrets.baseline
+    exit_code=$?
+    if [[ $exit_code != 0 ]]
+    then
+        echo "Detect Secrets failed!"
+        exit $exit_code 
+    fi
+    echo "Done."
+}
+
 autoflake_check(){
     echo "Running autoflake..."
     poetry run which autoflake > /dev/null
@@ -184,6 +202,7 @@ pre_commit(){
     DEBUG_FLAG="$1"
     TESTS_FLAG="$2"
     shift 2
+    detect_secrets
     autoflake_check --in-place $*
     black_check $*
     isort_check $*
@@ -196,6 +215,7 @@ pre_commit(){
 }
 
 pre_merge(){
+    detect_secrets
     autoflake_check --check $* .
     black_check --check $*
     isort_check --check-only $*
@@ -210,6 +230,7 @@ help(){
 
     COMMAND:
         install|setup   Install package.
+        *secret*        Perform detect secrets check.
         autoflake       Perform autoflake check.
         black           Perform black formatter check.
         isort           Perform isort import check.
@@ -264,6 +285,10 @@ case $CMD in
     install | setup)
         install_package
         exit 0
+        ;;
+    *secret*)
+        detect_secrets
+        exxit 0
         ;;
     autoflake)
         autoflake_check --in-place $*
