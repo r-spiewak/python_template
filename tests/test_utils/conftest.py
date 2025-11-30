@@ -33,7 +33,9 @@ def temp_dir():
         except Exception:  # pylint: disable=broad-exception-caught
             pass  # Last resort: ignore if still fails
 
-    shutil.rmtree(dir_path, onerror=onerror)
+    shutil.rmtree(  # pylint: disable=deprecated-argument
+        dir_path, onerror=onerror
+    )
 
 
 @pytest.fixture
